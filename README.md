@@ -8,8 +8,6 @@ This is a tiny, single-pass compiler for jsx. It takes in a string of javascript
 Because I no longer use babel for anything other than jsx compilation. I prefer to use small tools and I like to minimize dependencies where I can.
 
 ## limitations
-Inner html text is trimmed.
-`<div> inner text </div>`
-will be rendered as
-`React.createComponent('div', null, 'inner text')`
-If you want additional spaces, use `&nbsp;`
+Inner html text is trimmed.`<div> inner text </div>`will be rendered as `React.createComponent('div', null, 'inner text')`. If you want additional spaces, use `&nbsp;`.
+
+`&nbsp;` is actually the only special html character you can use. For the other ones (like `&copy;`, etc.), you must use unicode characters. Babel does this transformation automatically.
