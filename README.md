@@ -11,3 +11,5 @@ Because I no longer use babel for anything other than jsx compilation. I prefer 
 Inner html text is trimmed.`<div> inner text </div>`will be rendered as `React.createElement('div', null, 'inner text')`. If you want additional spaces, use `&nbsp;`.
 
 `&nbsp;` is actually the only special html character you can use. For the other ones (like `&copy;`, etc.), you must use unicode characters. Babel does this transformation automatically.
+
+It does not support the spread operator for passing props to components.
