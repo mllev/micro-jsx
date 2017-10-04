@@ -237,7 +237,6 @@ Compiler.prototype.tag_body = function (name) {
   } else if (this.accept('TK_LT')) {
     this.save()
     if (!this.accept('TK_FS')) {
-      this.emit('\n')
       this.parse_tag(true)
       this.tag_body(name)
     } else {
@@ -350,9 +349,6 @@ Compiler.prototype.possible_tag = function () {
     ) {
       this.out = this.out.slice(0, -1) // remove trailing <
       this.write = false
-      if (this.prev.data !== 'return') {
-        this.emit('\n')
-      }
       this.next()
       this.parse_tag()
       this.write = true
