@@ -1,3 +1,5 @@
 var fs = require('fs')
-var _compile = require('./index.js')
-console.log(_compile(fs.readFileSync('./test.jsx').toString(), 'React.createElement'))
+var compile_jsx = require('./index.js')
+var file = fs.readFileSync('./test.jsx').toString()
+
+console.log(compile_jsx(file, 'React.createElement'))
