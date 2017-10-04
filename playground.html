@@ -1,0 +1,40 @@
+<html>
+  <head>
+    <script src='index.js'>
+    </script>
+    <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro" rel="stylesheet">
+    <style>
+      #input, #output {
+        box-sizing: border-box;
+        font-family: 'Source Code Pro', monospace;
+        display: block;
+        width: 400px;
+        height: 400px;
+        margin: 10px;
+        border: none;
+        background: black;
+        font-size: 20px;
+        color: #fff;
+        padding: 25px;
+        float: left;
+      }
+      textarea {
+        resize: none;
+        border: none;
+        overflow: auto;
+        outline: none;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="input"></textarea>
+    <div id="output"></div>
+    <button id="enter">Enter</button>
+  </body>
+  <script>
+    var id = document.getElementById.bind(document)
+    id('enter').addEventListener('click', function () {
+      id('output').innerHTML = CompileJSX(id('input').value, 'React.createElement')
+    })
+  </script>
+</html>

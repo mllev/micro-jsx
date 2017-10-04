@@ -1,0 +1,36 @@
+TOKENS
+    < name = string / { } > comment eof
+
+jsexpr :=
+	'{' nodelist '}'
+
+expression :=
+	jsexpr |
+	string |
+	innertext
+
+expressionlist :=
+	expression expressionlist |
+	null
+
+tagclose :=
+	'/' '>' |
+	'>' expressionlist '<' '/' name '>'
+
+params :=
+	name params |
+	name '=' jsexpr params |
+	name '=' string params |
+	null
+
+tag :=
+    '<' name params tagclose
+
+nodelist :=
+	comment nodelist |
+	string nodelist |
+	tag nodelist |
+	null
+
+root :=
+	nodelist eof
