@@ -13,3 +13,6 @@ Inner html text is trimmed.`<div> inner text </div>`will be rendered as `React.c
 `&nbsp;` is actually the only special html character you can use. For the other ones (like `&copy;`, etc.), you must use unicode characters. Babel does this transformation automatically.
 
 It does not support the spread operator for passing props to components.
+
+## issues
+The error isn't very good right now.
