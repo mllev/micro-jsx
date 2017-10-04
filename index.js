@@ -303,7 +303,6 @@ Compiler.prototype.params = function (first) {
         this.write = true
       }
       if (this.accept('TK_STR')) {
-        // @todo: escape string
         v = '\'' + escape(this.prev.data) + '\''
       } else if (this.accept('TK_LB')) {
         this.jsexpr()
