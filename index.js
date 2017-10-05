@@ -398,7 +398,7 @@ Compiler.prototype.run = function () {
 }
 
 function _compile (code, replace) {
-  var compiler = new Compiler(code, replace || 'preact.h')
+  var compiler = new Compiler(code, replace)
   compiler.run()
   return compiler.out
 }
