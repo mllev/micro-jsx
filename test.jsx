@@ -6,7 +6,10 @@ class Component extends React.Component {
   }
 
   render () {
-    return <div class="hello">from<b>JSX</b></div>
+    return <div class="hello">
+      from
+      <span id="value">JSX</span>
+    </div>
   }
 }
 
