@@ -9,6 +9,7 @@ class Component extends React.Component {
     return <div class="hello">
       from
       <span id="value">JSX</span>
+      <MyComponent required />
     </div>
   }
 }

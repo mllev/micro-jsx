@@ -34,7 +34,7 @@ function is_sym (c) {
   return ['<','>','=','{','}',')'].indexOf(c) !== -1
 }
 
-function compiler (js) {
+function compiler (js, replacement) {
   var tok = undefined
   var i = 0
   var eof = js.length
@@ -45,6 +45,7 @@ function compiler (js) {
   var out = ''
   var current = 0
   var error = false
+  var tag_buf = ''
 
   while (i < eof) {
     if (is_sym(js[i])) {
@@ -173,11 +174,21 @@ function compiler (js) {
     log('red', char + '^')
   }
 
+  function get_previous () {
+    var prev
+    if (tokens[current - 1].token.type === 'space') prev = current - 2
+    else prev = current - 1
+    return prev
+  }
+
   function next () {
-    // @todo: handle writing to the output
     if (current < tokens.length - 1) current++
     if (current < tokens.length - 1 && tokens[current].token.type === 'space')
       current++
+  }
+
+  function next_raw () {
+    if (current < tokens.length - 1) current++
   }
 
   function peek (type, num) {
@@ -241,18 +252,24 @@ function compiler (js) {
   }
 
   function parse_params () {
+    var key, val
     if (error) return
     if (accept('name')) {
+      key = tokens[get_previous()].token.data
       if (accept('=')) {
         if (accept('string')) {
+          val = tokens[get_previous()].token.data
           parse_params()
         } else {
+          val = '[jsexpr]'
           parse_jsexpr()
           parse_params()
         }
       } else {
+        val = 'true'
         parse_params()
       }
+      console.log('key:', key, 'val:', val)
     }
   }
 
@@ -276,8 +293,8 @@ function compiler (js) {
         current--
       }
       while (!peek('{') && !peek('string') && !peek('<')) {
-        if (current >= tokens.length - 1) return
-        inner += tokens[current++].token.data
+        inner += tokens[current].token.data
+        next_raw()
       }
       console.log('inner:', inner)
       parse_inner()
@@ -294,21 +311,26 @@ function compiler (js) {
       expect('<')
       expect('/')
       expect('name')
-      if (tokens[current - 1].token.data === name) {
-        console.log('closing tag:', name)
+      var closing = get_previous()
+      if (tokens[closing].token.data !== name) {
+        printLine(tokens[closing].line, closing, 'Error: expected closing tag for ' + name)
+      } else {
+        console.log('Closing', name)
       }
       expect('>')
     }
   }
 
   function parse_tag () {
+    var name, formatted
     if (error) return
     expect('<')
     expect('name')
-    var name = ''
-    if (tokens[current - 1].token.type === 'space') name = tokens[current - 2].token.data
-    else name = tokens[current - 1].token.data
-    console.log('opening tag:', name)
+    formatted = name = tokens[get_previous()].token.data
+    if (name[0].toUpperCase() !== name[0]) {
+      formatted = '"' + name + '"'
+    }
+    console.log(replacement + '(' + formatted + ')')
     parse_params()
     parse_closing(name)
   }
@@ -334,6 +356,8 @@ function compiler (js) {
   }
 
   parse_body()
+
+  // console.log(tokens.map(function (t) { return t.token.data }).join(''))
 
   if (error) return js
   else return out
