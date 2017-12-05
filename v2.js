@@ -31,7 +31,7 @@ function is_string (c) {
 }
 
 function is_sym (c) {
-  return ['<','>','=','{','}',')','.'].indexOf(c) !== -1
+  return ['<', '>', '=', '{', '}', ')', '.', '('].indexOf(c) !== -1
 }
 
 function compiler (js, replacement) {
@@ -268,23 +268,24 @@ function compiler (js, replacement) {
     expect('}')
   }
 
-  function parse_params () {
+  function parse_params (first) {
     var key, val
     if (error) return
     if (accept('name')) {
+      if (!first) emit(', ')
       key = tokens[get_previous()].token.data
+      emit("'" + key + "'" + ': ')
       if (accept('=')) {
         if (accept('string')) {
           val = tokens[get_previous()].token.data
+          emit(val)
         } else {
-          val = '[jsexpr]'
           parse_jsexpr()
         }
       } else {
-        val = 'true'
+        emit('true')
       }
-      console.log('key:', key, 'val:', val)
-      parse_params()
+      parse_params(false)
     }
   }
 
@@ -292,15 +293,16 @@ function compiler (js, replacement) {
     var val
     if (error) return
     if (accept('string')) {
+      emit(',')
       val = tokens[get_previous()].token.data
     } else if (peek('{')) {
-      val = '[jsexpr]'
+      emit(',')
       parse_jsexpr()
     } else if (peek('<')) {
       if (peek('/', 1)) {
         return
       } else {
-        val = '[tag]'
+        emit(',')
         parse_tag()
       }
     } else {
@@ -313,9 +315,9 @@ function compiler (js, replacement) {
         inner += tokens[current].token.data
         next_raw()
       }
-      val = inner
+      emit(',')
+      emit('"' + inner + '"')
     }
-    console.log('inner:', val)
     parse_inner()
   }
 
@@ -350,7 +352,9 @@ function compiler (js, replacement) {
       formatted = '"' + name + '"'
     }
     emit(replacement + '(' + formatted + ', ')
-    parse_params()
+    emit('{')
+    parse_params(true)
+    emit('}')
     parse_closing(name)
   }
 
