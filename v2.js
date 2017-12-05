@@ -31,7 +31,7 @@ function is_string (c) {
 }
 
 function is_sym (c) {
-  return ['<','>','=','{','}',')'].indexOf(c) !== -1
+  return ['<','>','=','{','}',')','.'].indexOf(c) !== -1
 }
 
 function compiler (js, replacement) {
@@ -46,6 +46,7 @@ function compiler (js, replacement) {
   var current = 0
   var error = false
   var tag_buf = ''
+  var in_tag = false
 
   while (i < eof) {
     if (is_sym(js[i])) {
@@ -181,14 +182,25 @@ function compiler (js, replacement) {
     return prev
   }
 
+  function emit (code) {
+    out += code
+  }
+
+  function next_token () {
+    if (!in_tag || tokens[current].token.type === 'space') {
+      out += tokens[current].token.data
+    }
+    current++
+  }
+
   function next () {
-    if (current < tokens.length - 1) current++
+    if (current < tokens.length - 1) next_token()
     if (current < tokens.length - 1 && tokens[current].token.type === 'space')
-      current++
+      next_token()
   }
 
   function next_raw () {
-    if (current < tokens.length - 1) current++
+    if (current < tokens.length - 1) next_token()
   }
 
   function peek (type, num) {
@@ -220,21 +232,21 @@ function compiler (js, replacement) {
 
   function is_tag () {
     var p = undefined
-    var matched = false
+    var possible = true
 
     if (current === 0) {
-      matched = false
+      possible = false
     } else {
       p = tokens[current - 1]
       if (p.token.type === 'space') {
         if (current >= 2) p = tokens[current - 2]
-        else matched = false
+        else possible = false
       }
     }
 
     if (peek('<')) {
       if (
-         matched === true ||
+         possible === true &&
         (p.token.type !== 'name' || p.token.data === 'return') &&
          p.token.type !== ')' &&
          p.token.type !== '}'
@@ -242,12 +254,17 @@ function compiler (js, replacement) {
         return true
       }
     }
+    return false
   }
 
   function parse_jsexpr () {
     if (error) return
     expect('{')
+    in_tag = false
+    emit('(')
     parse_body(true)
+    emit(')')
+    in_tag = true
     expect('}')
   }
 
@@ -259,35 +276,35 @@ function compiler (js, replacement) {
       if (accept('=')) {
         if (accept('string')) {
           val = tokens[get_previous()].token.data
-          parse_params()
         } else {
           val = '[jsexpr]'
           parse_jsexpr()
-          parse_params()
         }
       } else {
         val = 'true'
-        parse_params()
       }
       console.log('key:', key, 'val:', val)
+      parse_params()
     }
   }
 
   function parse_inner () {
+    var val
     if (error) return
     if (accept('string')) {
-      parse_inner()
+      val = tokens[get_previous()].token.data
     } else if (peek('{')) {
+      val = '[jsexpr]'
       parse_jsexpr()
-      parse_inner()
     } else if (peek('<')) {
       if (peek('/', 1)) {
         return
       } else {
+        val = '[tag]'
         parse_tag()
-        parse_inner()
       }
     } else {
+      // @todo: escape strings and replace html chars with unicode chars (&nbsp, &copy, etc)
       var inner = ''
       if (current > 0 && tokens[current - 1].token.type === 'space') {
         current--
@@ -296,9 +313,10 @@ function compiler (js, replacement) {
         inner += tokens[current].token.data
         next_raw()
       }
-      console.log('inner:', inner)
-      parse_inner()
+      val = inner
     }
+    console.log('inner:', val)
+    parse_inner()
   }
 
   function parse_closing (name) {
@@ -314,8 +332,9 @@ function compiler (js, replacement) {
       var closing = get_previous()
       if (tokens[closing].token.data !== name) {
         printLine(tokens[closing].line, closing, 'Error: expected closing tag for ' + name)
+        error = true
       } else {
-        console.log('Closing', name)
+        emit(')')
       }
       expect('>')
     }
@@ -330,7 +349,7 @@ function compiler (js, replacement) {
     if (name[0].toUpperCase() !== name[0]) {
       formatted = '"' + name + '"'
     }
-    console.log(replacement + '(' + formatted + ')')
+    emit(replacement + '(' + formatted + ', ')
     parse_params()
     parse_closing(name)
   }
@@ -348,7 +367,9 @@ function compiler (js, replacement) {
       }
 
       if (is_tag()) {
+        in_tag = true
         parse_tag()
+        in_tag = false
       } else {
         next()
       }
@@ -356,8 +377,6 @@ function compiler (js, replacement) {
   }
 
   parse_body()
-
-  // console.log(tokens.map(function (t) { return t.token.data }).join(''))
 
   if (error) return js
   else return out
